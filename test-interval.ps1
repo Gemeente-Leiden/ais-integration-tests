@@ -3,7 +3,9 @@
 param(
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
-    [string]$ConfigPath
+    [string]$ConfigPath,
+
+    [switch]$SkipCertificateCheck
 )
 
 . (Join-Path $PSScriptRoot "lib/api.ps1")
@@ -19,6 +21,7 @@ function Start-ConnectionCheckExecution {
         [Parameter(Mandatory)][string]$RequestEndpoint,
         [Parameter(Mandatory)][hashtable]$RequestHeaders,
         [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$RequestBody,
+        [Parameter(Mandatory)][bool]$SkipCertificateCheck,
         [Parameter(Mandatory)][int]$ThrottleLimit
     )
 
@@ -26,7 +29,7 @@ function Start-ConnectionCheckExecution {
         -Name "connection-check-$ExecutionNumber" `
         -ThrottleLimit $ThrottleLimit `
         -ScriptBlock {
-            param($LibraryPath, $Number, $Method, $Endpoint, $Headers, $Body)
+            param($LibraryPath, $Number, $Method, $Endpoint, $Headers, $Body, $SkipCertificateValidation)
 
             try {
                 . $LibraryPath
@@ -35,7 +38,8 @@ function Start-ConnectionCheckExecution {
                     -Method $Method `
                     -Endpoint $Endpoint `
                     -Headers $Headers `
-                    -Body $Body
+                    -Body $Body `
+                    -SkipCertificateCheck $SkipCertificateValidation
 
                 [pscustomobject]@{
                     ExecutionNumber      = $Number
@@ -50,7 +54,7 @@ function Start-ConnectionCheckExecution {
                 }
             }
         } `
-        -ArgumentList $ApiLibraryPath, $ExecutionNumber, $RequestMethod, $RequestEndpoint, $RequestHeaders, $RequestBody
+        -ArgumentList $ApiLibraryPath, $ExecutionNumber, $RequestMethod, $RequestEndpoint, $RequestHeaders, $RequestBody, $SkipCertificateCheck
 }
 
 function Start-ScheduledExecutions {
@@ -60,6 +64,7 @@ function Start-ScheduledExecutions {
         [Parameter(Mandatory)][string]$RequestEndpoint,
         [Parameter(Mandatory)][hashtable]$RequestHeaders,
         [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$RequestBody,
+        [Parameter(Mandatory)][bool]$SkipCertificateCheck,
         [Parameter(Mandatory)][int]$IntervalSeconds,
         [Parameter(Mandatory)][int]$ConcurrentExecutions,
         [Parameter(Mandatory)][int]$DurationSeconds
@@ -98,6 +103,7 @@ function Start-ScheduledExecutions {
                 -RequestEndpoint $RequestEndpoint `
                 -RequestHeaders $RequestHeaders `
                 -RequestBody $RequestBody `
+                -SkipCertificateCheck $SkipCertificateCheck `
                 -ThrottleLimit $totalExecutions
         }
 
@@ -134,7 +140,10 @@ function Wait-ConnectionCheckExecutions {
 }
 
 function Main {
-    param([Parameter(Mandatory)][string]$ConfigurationPath)
+    param(
+        [Parameter(Mandatory)][string]$ConfigurationPath,
+        [Parameter(Mandatory)][bool]$SkipCertificateValidation
+    )
 
     $environmentFile = Join-Path $PSScriptRoot ".env"
     $apiLibraryPath = Join-Path $PSScriptRoot "lib/api.ps1"
@@ -190,6 +199,7 @@ function Main {
             -RequestEndpoint $request.Endpoint `
             -RequestHeaders $request.Headers `
             -RequestBody $request.Body `
+            -SkipCertificateCheck $SkipCertificateValidation `
             -IntervalSeconds $intervalSeconds `
             -ConcurrentExecutions $concurrentExecutions `
             -DurationSeconds $durationSeconds)
@@ -214,4 +224,6 @@ function Main {
     }
 }
 
-Main -ConfigurationPath $ConfigPath
+Main `
+    -ConfigurationPath $ConfigPath `
+    -SkipCertificateValidation $SkipCertificateCheck.IsPresent

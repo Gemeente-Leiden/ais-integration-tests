@@ -3,7 +3,9 @@
 param(
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
-    [string]$ConfigPath
+    [string]$ConfigPath,
+
+    [switch]$SkipCertificateCheck
 )
 
 . (Join-Path $PSScriptRoot "lib/api.ps1")
@@ -11,7 +13,10 @@ param(
 . (Join-Path $PSScriptRoot "lib/json.ps1")
 
 function Main {
-    param([Parameter(Mandatory)][string]$ConfigurationPath)
+    param(
+        [Parameter(Mandatory)][string]$ConfigurationPath,
+        [Parameter(Mandatory)][bool]$SkipCertificateValidation
+    )
 
     $envFile = Join-Path $PSScriptRoot ".env"
     $configuration = Import-JsonFile -Path $ConfigurationPath
@@ -48,10 +53,13 @@ function Main {
         -Method $request.Method `
         -Endpoint $request.Endpoint `
         -Headers $request.Headers `
-        -Body $request.Body
+        -Body $request.Body `
+        -SkipCertificateCheck $SkipCertificateValidation
 
     Write-ResponseDetails `
         -ApiResponse $apiResponse
 }
 
-Main -ConfigurationPath $ConfigPath
+Main `
+    -ConfigurationPath $ConfigPath `
+    -SkipCertificateValidation $SkipCertificateCheck.IsPresent

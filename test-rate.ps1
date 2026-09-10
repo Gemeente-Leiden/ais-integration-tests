@@ -3,7 +3,9 @@
 param(
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
-    [string]$ConfigPath
+    [string]$ConfigPath,
+
+    [switch]$SkipCertificateCheck
 )
 
 . (Join-Path $PSScriptRoot "lib/api.ps1")
@@ -19,6 +21,7 @@ function Start-RateTestExecution {
         [Parameter(Mandatory)][string]$RequestEndpoint,
         [Parameter(Mandatory)][hashtable]$RequestHeaders,
         [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$RequestBody,
+        [Parameter(Mandatory)][bool]$SkipCertificateCheck,
         [Parameter(Mandatory)][int]$ThrottleLimit
     )
 
@@ -26,7 +29,7 @@ function Start-RateTestExecution {
         -Name "rate-test-$ExecutionNumber" `
         -ThrottleLimit $ThrottleLimit `
         -ScriptBlock {
-            param($LibraryPath, $Number, $Method, $Endpoint, $Headers, $Body)
+            param($LibraryPath, $Number, $Method, $Endpoint, $Headers, $Body, $SkipCertificateValidation)
 
             try {
                 . $LibraryPath
@@ -35,7 +38,8 @@ function Start-RateTestExecution {
                     -Method $Method `
                     -Endpoint $Endpoint `
                     -Headers $Headers `
-                    -Body $Body
+                    -Body $Body `
+                    -SkipCertificateCheck $SkipCertificateValidation
 
                 [pscustomobject]@{
                     ExecutionNumber      = $Number
@@ -50,7 +54,7 @@ function Start-RateTestExecution {
                 }
             }
         } `
-        -ArgumentList $ApiLibraryPath, $ExecutionNumber, $RequestMethod, $RequestEndpoint, $RequestHeaders, $RequestBody
+        -ArgumentList $ApiLibraryPath, $ExecutionNumber, $RequestMethod, $RequestEndpoint, $RequestHeaders, $RequestBody, $SkipCertificateCheck
 }
 
 function Start-RateScheduledExecutions {
@@ -60,6 +64,7 @@ function Start-RateScheduledExecutions {
         [Parameter(Mandatory)][string]$RequestEndpoint,
         [Parameter(Mandatory)][hashtable]$RequestHeaders,
         [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$RequestBody,
+        [Parameter(Mandatory)][bool]$SkipCertificateCheck,
         [Parameter(Mandatory)][int]$RequestsPerSecond,
         [Parameter(Mandatory)][int]$DurationSeconds
     )
@@ -88,6 +93,7 @@ function Start-RateScheduledExecutions {
             -RequestEndpoint $RequestEndpoint `
             -RequestHeaders $RequestHeaders `
             -RequestBody $RequestBody `
+            -SkipCertificateCheck $SkipCertificateCheck `
             -ThrottleLimit $totalRequests
     }
 
@@ -121,7 +127,10 @@ function Wait-RateTestExecutions {
 }
 
 function Main {
-    param([Parameter(Mandatory)][string]$ConfigurationPath)
+    param(
+        [Parameter(Mandatory)][string]$ConfigurationPath,
+        [Parameter(Mandatory)][bool]$SkipCertificateValidation
+    )
 
     $environmentFile = Join-Path $PSScriptRoot ".env"
     $apiLibraryPath = Join-Path $PSScriptRoot "lib/api.ps1"
@@ -173,6 +182,7 @@ function Main {
             -RequestEndpoint $request.Endpoint `
             -RequestHeaders $request.Headers `
             -RequestBody $request.Body `
+            -SkipCertificateCheck $SkipCertificateValidation `
             -RequestsPerSecond $requestsPerSecond `
             -DurationSeconds $durationSeconds)
 
@@ -196,4 +206,6 @@ function Main {
     }
 }
 
-Main -ConfigurationPath $ConfigPath
+Main `
+    -ConfigurationPath $ConfigPath `
+    -SkipCertificateValidation $SkipCertificateCheck.IsPresent

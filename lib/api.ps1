@@ -64,7 +64,8 @@ function Invoke-ApiRequest {
         [Parameter(Mandatory)][string]$Method,
         [Parameter(Mandatory)][string]$Endpoint,
         [Parameter(Mandatory)][hashtable]$Headers,
-        [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$Body
+        [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$Body,
+        [bool]$SkipCertificateCheck = $false
     )
 
     $apiResponseHeaders = $null
@@ -73,10 +74,12 @@ function Invoke-ApiRequest {
         Method                  = $Method
         Uri                     = $Endpoint
         Headers                 = $Headers
-        SkipCertificateCheck    = $true
         ResponseHeadersVariable = "apiResponseHeaders"
         StatusCodeVariable      = "apiStatusCode"
         SkipHttpErrorCheck      = $true
+    }
+    if ($SkipCertificateCheck) {
+        $requestParameters.SkipCertificateCheck = $true
     }
     if ($null -ne $Body) {
         $requestParameters.Body = $Body
