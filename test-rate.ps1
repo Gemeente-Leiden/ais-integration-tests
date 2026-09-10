@@ -12,7 +12,7 @@ function Start-RateTestExecution {
         [Parameter(Mandatory)][string]$RequestMethod,
         [Parameter(Mandatory)][string]$RequestEndpoint,
         [Parameter(Mandatory)][hashtable]$RequestHeaders,
-        [Parameter(Mandatory)][string]$RequestBody,
+        [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$RequestBody,
         [Parameter(Mandatory)][int]$ThrottleLimit
     )
 
@@ -53,7 +53,7 @@ function Start-RateScheduledExecutions {
         [Parameter(Mandatory)][string]$RequestMethod,
         [Parameter(Mandatory)][string]$RequestEndpoint,
         [Parameter(Mandatory)][hashtable]$RequestHeaders,
-        [Parameter(Mandatory)][string]$RequestBody,
+        [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$RequestBody,
         [Parameter(Mandatory)][int]$RequestsPerSecond,
         [Parameter(Mandatory)][int]$DurationSeconds
     )

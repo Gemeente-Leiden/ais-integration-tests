@@ -43,7 +43,7 @@ function Write-RequestDetails {
         [Parameter(Mandatory)][string]$Method,
         [Parameter(Mandatory)][string]$Endpoint,
         [Parameter(Mandatory)][hashtable]$Headers,
-        [Parameter(Mandatory)][string]$Body
+        [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$Body
     )
 
     Write-Host ""
@@ -55,7 +55,7 @@ function Write-RequestDetails {
         Sort-Object Key |
         ForEach-Object { Write-Host ("{0}: {1}" -f $_.Key, $_.Value) }
     Write-Host "Request body:"
-    Write-Host $Body
+    Write-Host $(if ($null -ne $Body) { $Body } else { "(none)" })
     Write-Host ""
 }
 
@@ -64,22 +64,27 @@ function Invoke-ApiRequest {
         [Parameter(Mandatory)][string]$Method,
         [Parameter(Mandatory)][string]$Endpoint,
         [Parameter(Mandatory)][hashtable]$Headers,
-        [Parameter(Mandatory)][string]$Body
+        [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$Body
     )
 
     $apiResponseHeaders = $null
     $apiStatusCode = $null
+    $requestParameters = @{
+        Method                  = $Method
+        Uri                     = $Endpoint
+        Headers                 = $Headers
+        SkipCertificateCheck    = $true
+        ResponseHeadersVariable = "apiResponseHeaders"
+        StatusCodeVariable      = "apiStatusCode"
+        SkipHttpErrorCheck      = $true
+    }
+    if ($null -ne $Body) {
+        $requestParameters.Body = $Body
+    }
+
     $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     try {
-        $response = Invoke-RestMethod `
-            -Method $Method `
-            -Uri $Endpoint `
-            -Headers $Headers `
-            -Body $Body `
-            -SkipCertificateCheck `
-            -ResponseHeadersVariable apiResponseHeaders `
-            -StatusCodeVariable apiStatusCode `
-            -SkipHttpErrorCheck
+        $response = Invoke-RestMethod @requestParameters
     } finally {
         $stopwatch.Stop()
     }
