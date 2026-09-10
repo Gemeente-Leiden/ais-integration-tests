@@ -1,16 +1,22 @@
 #!/usr/bin/env pwsh
 
+param(
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string]$ConfigPath
+)
+
 . (Join-Path $PSScriptRoot "lib/api.ps1")
 . (Join-Path $PSScriptRoot "lib/env.ps1")
 . (Join-Path $PSScriptRoot "lib/json.ps1")
 
 function Main {
-    $envFile = Join-Path $PSScriptRoot ".env"
-    $configuration = Import-JsonFile `
-        -Path (Join-Path $PSScriptRoot "config.json")
+    param([Parameter(Mandatory)][string]$ConfigurationPath)
 
-    Import-EnvironmentFile `
-        -Path $envFile
+    $envFile = Join-Path $PSScriptRoot ".env"
+    $configuration = Import-JsonFile -Path $ConfigurationPath
+
+    Import-EnvironmentFile -Path $envFile
     Assert-RequiredEnvironmentVariables `
         -EnvironmentFile $envFile `
         -Names @(
@@ -48,4 +54,4 @@ function Main {
         -ApiResponse $apiResponse
 }
 
-Main
+Main -ConfigurationPath $ConfigPath

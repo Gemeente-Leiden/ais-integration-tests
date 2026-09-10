@@ -1,5 +1,11 @@
 #!/usr/bin/env pwsh
 
+param(
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string]$ConfigPath
+)
+
 . (Join-Path $PSScriptRoot "lib/api.ps1")
 . (Join-Path $PSScriptRoot "lib/env.ps1")
 . (Join-Path $PSScriptRoot "lib/json.ps1")
@@ -115,10 +121,11 @@ function Wait-RateTestExecutions {
 }
 
 function Main {
+    param([Parameter(Mandatory)][string]$ConfigurationPath)
+
     $environmentFile = Join-Path $PSScriptRoot ".env"
     $apiLibraryPath = Join-Path $PSScriptRoot "lib/api.ps1"
-    $configuration = Import-JsonFile `
-        -Path (Join-Path $PSScriptRoot "config.json")
+    $configuration = Import-JsonFile -Path $ConfigurationPath
     $jobs = @()
 
     Import-EnvironmentFile -Path $environmentFile
@@ -189,4 +196,4 @@ function Main {
     }
 }
 
-Main
+Main -ConfigurationPath $ConfigPath
