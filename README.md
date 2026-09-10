@@ -4,7 +4,7 @@
 
 # AIS integration tests
 
-PowerShell tools for testing an OAuth 2.0-protected HTTP API. A request is
+PowerShell tools for testing OAuth 2.0-protected HTTP APIs. A request is
 defined in a JSON file, so multiple endpoints and payloads can be maintained as
 separate test configurations.
 
