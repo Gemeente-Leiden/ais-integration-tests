@@ -190,8 +190,8 @@ Store independent JSON files under `tests/` or another directory and select one
 at runtime:
 
 ```powershell
-./test-single.ps1 -ConfigPath ./tests/customer-a.json
-./test-single.ps1 -ConfigPath ./tests/customer-b.json
+./test-single.ps1 -ConfigPath ./tests/request-a.json
+./test-single.ps1 -ConfigPath ./tests/request-b.json
 ```
 
 Both relative and absolute paths are supported. A configuration used by the
