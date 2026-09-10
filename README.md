@@ -8,11 +8,12 @@ PowerShell tools for testing an OAuth 2.0-protected HTTP API. A request is
 defined in a JSON file, so multiple endpoints and payloads can be maintained as
 separate test configurations.
 
-The repository provides three test modes:
+The repository provides four test modes:
 
 - `test-single.ps1` sends one request and prints the request and response.
 - `test-interval.ps1` starts a concurrent batch at a fixed interval.
 - `test-rate.ps1` distributes requests at a configured requests-per-second rate.
+- `test-tcp.ps1` checks whether a TCP connection can be opened to the request endpoint.
 
 ## Prerequisites
 
@@ -163,6 +164,30 @@ Requests are spaced evenly throughout each second. The intended number of
 requests is `requestsPerSecond * durationSeconds`. Scheduling overhead can cause
 fewer requests to start when the local machine cannot keep up with the requested
 rate.
+
+## Run a TCP connection test
+
+```powershell
+./test-tcp.ps1 -ConfigPath ./tests/brp-personen.json
+```
+
+The TCP test reads `request.endpoint`, extracts its host and port, and attempts
+one TCP connection. It does not retrieve an OAuth token, load `.env`, send HTTP
+headers, or send a request body.
+
+HTTP and HTTPS URLs use their standard ports when no port is specified: port 80
+for HTTP and port 443 for HTTPS. Other URI schemes must include an explicit
+port, for example `tcp://service.example.nl:8443`.
+
+The default connection timeout is 10 seconds. Set a value from 1 through 300
+seconds with `-TimeoutSeconds`:
+
+```powershell
+./test-tcp.ps1 -ConfigPath ./tests/brp-personen.json -TimeoutSeconds 5
+```
+
+The script reports the selected host and port and the connection duration. A
+refused, timed-out, or otherwise failed connection returns a nonzero exit code.
 
 ## Results and timing
 
