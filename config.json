@@ -1,0 +1,35 @@
+{
+  "request": {
+    "endpoint": "https://api-dev.data.leiden.nl/api/reg/persons/v1/personen",
+    "method": "POST",
+    "headers": {
+      "Ocp-Apim-Subscription-Key": "${APIM_SUBSCRIPTION_KEY}",
+      "Ocp-Apim-Trace": "true",
+      "x-gebruiker": "script",
+      "x-doelbinding": "naw",
+      "Content-Type": "application/json",
+      "Authorization": "Bearer ${ACCESS_TOKEN}"
+    },
+    "body": {
+      "type": "RaadpleegMetBurgerservicenummer",
+      "burgerservicenummer": [
+        "999993651"
+      ],
+      "fields": [
+        "burgerservicenummer",
+        "naam.voornamen"
+      ]
+    }
+  },
+  "interval": {
+    "seconds": 10,
+    "concurrentExecutions": 10,
+    "durationSeconds": 60,
+    "percentiles": [80, 90, 95]
+  },
+  "rate": {
+    "requestsPerSecond": 10,
+    "durationSeconds": 30,
+    "percentiles": [80, 90, 95]
+  }
+}
