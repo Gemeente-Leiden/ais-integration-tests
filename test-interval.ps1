@@ -1,7 +1,6 @@
 #!/usr/bin/env pwsh
 
 param(
-    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$ConfigPath,
 
@@ -9,6 +8,7 @@ param(
 )
 
 . (Join-Path $PSScriptRoot "lib/api.ps1")
+. (Join-Path $PSScriptRoot "lib/config.ps1")
 . (Join-Path $PSScriptRoot "lib/env.ps1")
 . (Join-Path $PSScriptRoot "lib/json.ps1")
 . (Join-Path $PSScriptRoot "lib/stats.ps1")
@@ -224,6 +224,11 @@ function Main {
     }
 }
 
+$resolvedConfigPath = Resolve-ConfigurationPath `
+    -ConfigPath $ConfigPath `
+    -TestsDirectory (Join-Path $PSScriptRoot "tests") `
+    -BasePath $PSScriptRoot
+
 Main `
-    -ConfigurationPath $ConfigPath `
+    -ConfigurationPath $resolvedConfigPath `
     -SkipCertificateValidation $SkipCertificateCheck.IsPresent

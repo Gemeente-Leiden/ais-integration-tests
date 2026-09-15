@@ -1,7 +1,6 @@
 #!/usr/bin/env pwsh
 
 param(
-    [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$ConfigPath,
 
@@ -9,6 +8,7 @@ param(
     [int]$TimeoutSeconds = 10
 )
 
+. (Join-Path $PSScriptRoot "lib/config.ps1")
 . (Join-Path $PSScriptRoot "lib/json.ps1")
 
 function Get-TcpEndpoint {
@@ -80,6 +80,11 @@ function Main {
     Write-Host ("TCP connection succeeded in {0:N2} ms." -f $durationMilliseconds)
 }
 
+$resolvedConfigPath = Resolve-ConfigurationPath `
+    -ConfigPath $ConfigPath `
+    -TestsDirectory (Join-Path $PSScriptRoot "tests") `
+    -BasePath $PSScriptRoot
+
 Main `
-    -ConfigurationPath $ConfigPath `
+    -ConfigurationPath $resolvedConfigPath `
     -ConnectionTimeoutSeconds $TimeoutSeconds

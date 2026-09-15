@@ -47,7 +47,8 @@ committed, remove them from Git history where appropriate and rotate them.
 
 ## Request configuration
 
-Each run requires `-ConfigPath` with a path to a JSON configuration file. See
+Each run uses a JSON configuration file. Pass `-ConfigPath` directly, or omit it
+to choose from the JSON files found recursively under `tests/`. See
 `tests/brp-personen.json` for a working example.
 
 ```json
@@ -111,6 +112,12 @@ An unresolved or empty placeholder stops the run with an error.
 ./test-single.ps1 -ConfigPath ./tests/brp-personen.json
 ```
 
+Omit `-ConfigPath` to select a configuration interactively:
+
+```powershell
+./test-single.ps1
+```
+
 To disable TLS certificate validation for a run, add the optional switch:
 
 ```powershell
@@ -130,6 +137,8 @@ status, response headers, and response body.
 ./test-interval.ps1 -ConfigPath ./tests/brp-personen.json
 ./test-interval.ps1 -ConfigPath ./tests/brp-personen.json -SkipCertificateCheck
 ```
+
+You can also omit `-ConfigPath` to choose from configurations under `tests/`.
 
 The `interval` object controls the run:
 
@@ -152,6 +161,8 @@ stops.
 ./test-rate.ps1 -ConfigPath ./tests/brp-personen.json -SkipCertificateCheck
 ```
 
+You can also omit `-ConfigPath` to choose from configurations under `tests/`.
+
 The `rate` object controls the run:
 
 | Property | Description |
@@ -170,6 +181,8 @@ rate.
 ```powershell
 ./test-tcp.ps1 -ConfigPath ./tests/brp-personen.json
 ```
+
+You can also omit `-ConfigPath` to choose from configurations under `tests/`.
 
 The TCP test reads `request.endpoint`, extracts its host and port, and attempts
 one TCP connection. It does not retrieve an OAuth token, load `.env`, send HTTP
@@ -211,8 +224,8 @@ throw an error. Configuration and authentication errors also terminate the run.
 
 ## Multiple configurations
 
-Store independent JSON files under `tests/` or another directory and select one
-at runtime:
+Store independent JSON files under `tests/` and omit `-ConfigPath` to select one
+at runtime. You can still pass paths explicitly:
 
 ```powershell
 ./test-single.ps1 -ConfigPath ./tests/request-a.json
