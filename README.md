@@ -53,7 +53,7 @@ committed, remove them from Git history where appropriate and rotate them.
 
 Each run uses a JSON configuration file. Pass `-ConfigPath` directly, or omit it
 to choose from the JSON files found recursively under `tests/`. See
-`tests/brp-personen.json` for a working example.
+`tests/dev/brp-personen.json` for a working example.
 
 ```json
 {
@@ -125,13 +125,13 @@ a password.
 ## Run a single request
 
 ```powershell
-./test-single.ps1 -ConfigPath ./tests/brp-personen.json
+./test-single.ps1 -ConfigPath ./tests/dev/brp-personen.json
 ```
 
 To use mTLS instead of OAuth 2.0:
 
 ```powershell
-./test-single.ps1 -ConfigPath ./tests/brp-personen.json -AuthenticationType mTLS
+./test-single.ps1 -ConfigPath ./tests/dev/brp-personen.json -AuthenticationType mTLS
 ```
 
 Omit `-ConfigPath` to select a configuration interactively:
@@ -143,7 +143,7 @@ Omit `-ConfigPath` to select a configuration interactively:
 To disable TLS certificate validation for a run, add the optional switch:
 
 ```powershell
-./test-single.ps1 -ConfigPath ./tests/brp-personen.json -SkipCertificateCheck
+./test-single.ps1 -ConfigPath ./tests/dev/brp-personen.json -SkipCertificateCheck
 ```
 
 The single test prints the request method, endpoint, headers, body, response
@@ -156,8 +156,8 @@ status, response headers, and response body.
 ## Run an interval test
 
 ```powershell
-./test-interval.ps1 -ConfigPath ./tests/brp-personen.json
-./test-interval.ps1 -ConfigPath ./tests/brp-personen.json -SkipCertificateCheck
+./test-interval.ps1 -ConfigPath ./tests/dev/brp-personen.json
+./test-interval.ps1 -ConfigPath ./tests/dev/brp-personen.json -SkipCertificateCheck
 ```
 
 You can also omit `-ConfigPath` to choose from configurations under `tests/`.
@@ -179,8 +179,8 @@ stops.
 ## Run a rate test
 
 ```powershell
-./test-rate.ps1 -ConfigPath ./tests/brp-personen.json
-./test-rate.ps1 -ConfigPath ./tests/brp-personen.json -SkipCertificateCheck
+./test-rate.ps1 -ConfigPath ./tests/dev/brp-personen.json
+./test-rate.ps1 -ConfigPath ./tests/dev/brp-personen.json -SkipCertificateCheck
 ```
 
 You can also omit `-ConfigPath` to choose from configurations under `tests/`.
@@ -201,7 +201,7 @@ rate.
 ## Run a TCP connection test
 
 ```powershell
-./test-tcp.ps1 -ConfigPath ./tests/brp-personen.json
+./test-tcp.ps1 -ConfigPath ./tests/dev/brp-personen.json
 ```
 
 You can also omit `-ConfigPath` to choose from configurations under `tests/`.
@@ -218,7 +218,7 @@ The default connection timeout is 10 seconds. Set a value from 1 through 300
 seconds with `-TimeoutSeconds`:
 
 ```powershell
-./test-tcp.ps1 -ConfigPath ./tests/brp-personen.json -TimeoutSeconds 5
+./test-tcp.ps1 -ConfigPath ./tests/dev/brp-personen.json -TimeoutSeconds 5
 ```
 
 The script reports the selected host and port and the connection duration. A
