@@ -4,9 +4,9 @@
 
 # AIS integration tests
 
-PowerShell tools for testing OAuth 2.0-protected HTTP APIs. A request is
-defined in a JSON file, so multiple endpoints and payloads can be maintained as
-separate test configurations.
+PowerShell tools for testing protected HTTP APIs with OAuth 2.0 or mTLS. A
+request is defined in a JSON file, so multiple endpoints and payloads can be
+maintained as separate test configurations.
 
 The repository provides four test modes:
 
@@ -18,8 +18,10 @@ The repository provides four test modes:
 ## Prerequisites
 
 - PowerShell 7 or newer (`pwsh`)
-- Network access to the OAuth token endpoint and target API
-- OAuth client credentials
+- Network access to the OAuth token endpoint, when using OAuth 2.0
+- Network access to the target API
+- OAuth client credentials, when using OAuth 2.0
+- A client certificate in PFX format, when using mTLS
 - An API subscription key if required by the configured API
 
 Run all commands from the repository root.
@@ -39,6 +41,8 @@ OAUTH2_CLIENT_ID=replace-with-client-id
 OAUTH2_CLIENT_SECRET=replace-with-client-secret
 OAUTH2_SCOPE=replace-with-scope/.default
 OAUTH2_TOKEN_URL=https://login.microsoftonline.com/replace-with-tenant-id/oauth2/v2.0/token
+MTLS_CERTIFICATE_PATH=replace-with-client-certificate-pfx-path
+MTLS_CERTIFICATE_PASSWORD=replace-with-client-certificate-password
 APIM_SUBSCRIPTION_KEY=replace-with-subscription-key
 ```
 
@@ -58,8 +62,7 @@ to choose from the JSON files found recursively under `tests/`. See
         "method": "POST",
         "headers": {
             "Ocp-Apim-Subscription-Key": "${APIM_SUBSCRIPTION_KEY}",
-            "Content-Type": "application/json",
-            "Authorization": "Bearer ${ACCESS_TOKEN}"
+            "Content-Type": "application/json"
         },
         "body": {
             "example": true
@@ -100,16 +103,35 @@ The request body supports the following forms:
 Strings in request headers and bodies can reference environment variables using
 `${NAME}`. The following placeholders are commonly used:
 
-- `${ACCESS_TOKEN}` is provided automatically after OAuth authentication.
 - `${APIM_SUBSCRIPTION_KEY}` is read from `.env`.
 - Any other `${NAME}` is resolved from the current process environment.
 
 An unresolved or empty placeholder stops the run with an error.
 
+## Authentication type
+
+The HTTP runners support `-AuthenticationType` with these values:
+
+| Value | Description |
+| --- | --- |
+| `OAuth2` | Retrieves an OAuth 2.0 access token and injects the `Authorization` header automatically. This is the default. |
+| `mTLS` | Sends the request with the client certificate from `MTLS_CERTIFICATE_PATH`. No OAuth token is retrieved. |
+
+Request configurations do not need to set the OAuth `Authorization` header.
+
+`MTLS_CERTIFICATE_PASSWORD` may be left empty when the PFX file does not require
+a password.
+
 ## Run a single request
 
 ```powershell
 ./test-single.ps1 -ConfigPath ./tests/brp-personen.json
+```
+
+To use mTLS instead of OAuth 2.0:
+
+```powershell
+./test-single.ps1 -ConfigPath ./tests/brp-personen.json -AuthenticationType mTLS
 ```
 
 Omit `-ConfigPath` to select a configuration interactively:

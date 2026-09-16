@@ -4,6 +4,9 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$ConfigPath,
 
+    [ValidateSet("OAuth2", "mTLS")]
+    [string]$AuthenticationType = "OAuth2",
+
     [switch]$SkipCertificateCheck
 )
 
@@ -21,6 +24,7 @@ function Start-RateTestExecution {
         [Parameter(Mandatory)][string]$RequestEndpoint,
         [Parameter(Mandatory)][hashtable]$RequestHeaders,
         [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$RequestBody,
+        [AllowNull()][System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate,
         [Parameter(Mandatory)][bool]$SkipCertificateCheck,
         [Parameter(Mandatory)][int]$ThrottleLimit
     )
@@ -29,7 +33,7 @@ function Start-RateTestExecution {
         -Name "rate-test-$ExecutionNumber" `
         -ThrottleLimit $ThrottleLimit `
         -ScriptBlock {
-            param($LibraryPath, $Number, $Method, $Endpoint, $Headers, $Body, $SkipCertificateValidation)
+            param($LibraryPath, $Number, $Method, $Endpoint, $Headers, $Body, $ClientCertificate, $SkipCertificateValidation)
 
             try {
                 . $LibraryPath
@@ -39,6 +43,7 @@ function Start-RateTestExecution {
                     -Endpoint $Endpoint `
                     -Headers $Headers `
                     -Body $Body `
+                    -Certificate $ClientCertificate `
                     -SkipCertificateCheck $SkipCertificateValidation
 
                 [pscustomobject]@{
@@ -54,7 +59,7 @@ function Start-RateTestExecution {
                 }
             }
         } `
-        -ArgumentList $ApiLibraryPath, $ExecutionNumber, $RequestMethod, $RequestEndpoint, $RequestHeaders, $RequestBody, $SkipCertificateCheck
+        -ArgumentList $ApiLibraryPath, $ExecutionNumber, $RequestMethod, $RequestEndpoint, $RequestHeaders, $RequestBody, $Certificate, $SkipCertificateCheck
 }
 
 function Start-RateScheduledExecutions {
@@ -64,6 +69,7 @@ function Start-RateScheduledExecutions {
         [Parameter(Mandatory)][string]$RequestEndpoint,
         [Parameter(Mandatory)][hashtable]$RequestHeaders,
         [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$RequestBody,
+        [AllowNull()][System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate,
         [Parameter(Mandatory)][bool]$SkipCertificateCheck,
         [Parameter(Mandatory)][int]$RequestsPerSecond,
         [Parameter(Mandatory)][int]$DurationSeconds
@@ -93,6 +99,7 @@ function Start-RateScheduledExecutions {
             -RequestEndpoint $RequestEndpoint `
             -RequestHeaders $RequestHeaders `
             -RequestBody $RequestBody `
+            -Certificate $Certificate `
             -SkipCertificateCheck $SkipCertificateCheck `
             -ThrottleLimit $totalRequests
     }
@@ -129,6 +136,7 @@ function Wait-RateTestExecutions {
 function Main {
     param(
         [Parameter(Mandatory)][string]$ConfigurationPath,
+        [Parameter(Mandatory)][ValidateSet("OAuth2", "mTLS")][string]$AuthenticationType,
         [Parameter(Mandatory)][bool]$SkipCertificateValidation
     )
 
@@ -140,13 +148,7 @@ function Main {
     Import-EnvironmentFile -Path $environmentFile
     Assert-RequiredEnvironmentVariables `
         -EnvironmentFile $environmentFile `
-        -Names @(
-            "OAUTH2_CLIENT_ID",
-            "OAUTH2_CLIENT_SECRET",
-            "OAUTH2_SCOPE",
-            "OAUTH2_TOKEN_URL",
-            "APIM_SUBSCRIPTION_KEY"
-        )
+        -Names @("APIM_SUBSCRIPTION_KEY")
 
     $requestsPerSecond = Get-JsonPositiveInteger `
         -Configuration $configuration `
@@ -160,14 +162,14 @@ function Main {
         -Minimum 1 `
         -Maximum 100)
 
-    $basicAuthentication = Get-BasicAuthentication `
-        -ClientId $env:OAUTH2_CLIENT_ID `
-        -ClientSecret $env:OAUTH2_CLIENT_SECRET
-    $accessToken = Get-OAuthAccessToken `
-        -TokenUrl $env:OAUTH2_TOKEN_URL `
-        -Scope $env:OAUTH2_SCOPE `
-        -BasicAuthentication $basicAuthentication
-    $request = Get-JsonRequestConfiguration -Configuration $configuration -AccessToken $accessToken
+    $authentication = Get-ApiAuthenticationConfiguration `
+        -AuthenticationType $AuthenticationType `
+        -EnvironmentFile $environmentFile
+    $request = Get-JsonRequestConfiguration `
+        -Configuration $configuration
+    Add-AuthorizationBearerTokenHeader `
+        -Headers $request.Headers `
+        -AccessToken $authentication.AccessToken
 
     Write-Host (
         "Running at {0} request(s) per second for {1} second(s)." -f
@@ -182,6 +184,7 @@ function Main {
             -RequestEndpoint $request.Endpoint `
             -RequestHeaders $request.Headers `
             -RequestBody $request.Body `
+            -Certificate $authentication.Certificate `
             -SkipCertificateCheck $SkipCertificateValidation `
             -RequestsPerSecond $requestsPerSecond `
             -DurationSeconds $durationSeconds)
@@ -213,4 +216,5 @@ $resolvedConfigPath = Resolve-ConfigurationPath `
 
 Main `
     -ConfigurationPath $resolvedConfigPath `
+    -AuthenticationType $AuthenticationType `
     -SkipCertificateValidation $SkipCertificateCheck.IsPresent

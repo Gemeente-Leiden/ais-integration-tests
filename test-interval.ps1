@@ -4,6 +4,9 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$ConfigPath,
 
+    [ValidateSet("OAuth2", "mTLS")]
+    [string]$AuthenticationType = "OAuth2",
+
     [switch]$SkipCertificateCheck
 )
 
@@ -21,6 +24,7 @@ function Start-ConnectionCheckExecution {
         [Parameter(Mandatory)][string]$RequestEndpoint,
         [Parameter(Mandatory)][hashtable]$RequestHeaders,
         [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$RequestBody,
+        [AllowNull()][System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate,
         [Parameter(Mandatory)][bool]$SkipCertificateCheck,
         [Parameter(Mandatory)][int]$ThrottleLimit
     )
@@ -29,7 +33,7 @@ function Start-ConnectionCheckExecution {
         -Name "connection-check-$ExecutionNumber" `
         -ThrottleLimit $ThrottleLimit `
         -ScriptBlock {
-            param($LibraryPath, $Number, $Method, $Endpoint, $Headers, $Body, $SkipCertificateValidation)
+            param($LibraryPath, $Number, $Method, $Endpoint, $Headers, $Body, $ClientCertificate, $SkipCertificateValidation)
 
             try {
                 . $LibraryPath
@@ -39,6 +43,7 @@ function Start-ConnectionCheckExecution {
                     -Endpoint $Endpoint `
                     -Headers $Headers `
                     -Body $Body `
+                    -Certificate $ClientCertificate `
                     -SkipCertificateCheck $SkipCertificateValidation
 
                 [pscustomobject]@{
@@ -54,7 +59,7 @@ function Start-ConnectionCheckExecution {
                 }
             }
         } `
-        -ArgumentList $ApiLibraryPath, $ExecutionNumber, $RequestMethod, $RequestEndpoint, $RequestHeaders, $RequestBody, $SkipCertificateCheck
+        -ArgumentList $ApiLibraryPath, $ExecutionNumber, $RequestMethod, $RequestEndpoint, $RequestHeaders, $RequestBody, $Certificate, $SkipCertificateCheck
 }
 
 function Start-ScheduledExecutions {
@@ -64,6 +69,7 @@ function Start-ScheduledExecutions {
         [Parameter(Mandatory)][string]$RequestEndpoint,
         [Parameter(Mandatory)][hashtable]$RequestHeaders,
         [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$RequestBody,
+        [AllowNull()][System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate,
         [Parameter(Mandatory)][bool]$SkipCertificateCheck,
         [Parameter(Mandatory)][int]$IntervalSeconds,
         [Parameter(Mandatory)][int]$ConcurrentExecutions,
@@ -103,6 +109,7 @@ function Start-ScheduledExecutions {
                 -RequestEndpoint $RequestEndpoint `
                 -RequestHeaders $RequestHeaders `
                 -RequestBody $RequestBody `
+                -Certificate $Certificate `
                 -SkipCertificateCheck $SkipCertificateCheck `
                 -ThrottleLimit $totalExecutions
         }
@@ -142,6 +149,7 @@ function Wait-ConnectionCheckExecutions {
 function Main {
     param(
         [Parameter(Mandatory)][string]$ConfigurationPath,
+        [Parameter(Mandatory)][ValidateSet("OAuth2", "mTLS")][string]$AuthenticationType,
         [Parameter(Mandatory)][bool]$SkipCertificateValidation
     )
 
@@ -153,13 +161,7 @@ function Main {
     Import-EnvironmentFile -Path $environmentFile
     Assert-RequiredEnvironmentVariables `
         -EnvironmentFile $environmentFile `
-        -Names @(
-            "OAUTH2_CLIENT_ID",
-            "OAUTH2_CLIENT_SECRET",
-            "OAUTH2_SCOPE",
-            "OAUTH2_TOKEN_URL",
-            "APIM_SUBSCRIPTION_KEY"
-        )
+        -Names @("APIM_SUBSCRIPTION_KEY")
 
     $intervalSeconds = Get-JsonPositiveInteger `
         -Configuration $configuration `
@@ -176,14 +178,14 @@ function Main {
         -Minimum 1 `
         -Maximum 100)
 
-    $basicAuthentication = Get-BasicAuthentication `
-        -ClientId $env:OAUTH2_CLIENT_ID `
-        -ClientSecret $env:OAUTH2_CLIENT_SECRET
-    $accessToken = Get-OAuthAccessToken `
-        -TokenUrl $env:OAUTH2_TOKEN_URL `
-        -Scope $env:OAUTH2_SCOPE `
-        -BasicAuthentication $basicAuthentication
-    $request = Get-JsonRequestConfiguration -Configuration $configuration -AccessToken $accessToken
+    $authentication = Get-ApiAuthenticationConfiguration `
+        -AuthenticationType $AuthenticationType `
+        -EnvironmentFile $environmentFile
+    $request = Get-JsonRequestConfiguration `
+        -Configuration $configuration
+    Add-AuthorizationBearerTokenHeader `
+        -Headers $request.Headers `
+        -AccessToken $authentication.AccessToken
 
     Write-Host (
         "Running for {0} second(s): {1} execution(s) every {2} second(s)." -f
@@ -199,6 +201,7 @@ function Main {
             -RequestEndpoint $request.Endpoint `
             -RequestHeaders $request.Headers `
             -RequestBody $request.Body `
+            -Certificate $authentication.Certificate `
             -SkipCertificateCheck $SkipCertificateValidation `
             -IntervalSeconds $intervalSeconds `
             -ConcurrentExecutions $concurrentExecutions `
@@ -231,4 +234,5 @@ $resolvedConfigPath = Resolve-ConfigurationPath `
 
 Main `
     -ConfigurationPath $resolvedConfigPath `
+    -AuthenticationType $AuthenticationType `
     -SkipCertificateValidation $SkipCertificateCheck.IsPresent

@@ -167,21 +167,18 @@ function ConvertTo-JsonText {
 }
 
 function Get-JsonRequestConfiguration {
-    param(
-        [Parameter(Mandatory)][System.Collections.IDictionary]$Configuration,
-        [Parameter(Mandatory)][string]$AccessToken
-    )
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$Configuration)
 
     $headers = Resolve-JsonPlaceholders `
         -Value (Get-JsonObject -Configuration $Configuration -Path "request.headers") `
-        -Variables @{ ACCESS_TOKEN = $AccessToken }
+        -Variables @{}
     $request = Get-JsonObject -Configuration $Configuration -Path "request"
     $body = $null
 
     if ($request.Contains("body") -and $null -ne $request["body"]) {
         $resolvedBody = Resolve-JsonPlaceholders `
             -Value $request["body"] `
-            -Variables @{ ACCESS_TOKEN = $AccessToken }
+            -Variables @{}
         $body = if ($resolvedBody -is [string]) {
             $resolvedBody
         } else {

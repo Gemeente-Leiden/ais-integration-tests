@@ -7,8 +7,7 @@
       "Ocp-Apim-Trace": "true",
       "x-gebruiker": "script",
       "x-doelbinding": "naw",
-      "Content-Type": "application/json",
-      "Authorization": "Bearer ${ACCESS_TOKEN}"
+      "Content-Type": "application/json"
     },
     "body": {
       "type": "RaadpleegMetBurgerservicenummer",

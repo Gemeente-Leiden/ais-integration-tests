@@ -38,6 +38,97 @@ function Get-OAuthAccessToken {
     return $accessToken
 }
 
+function Get-MtlsClientCertificate {
+    param(
+        [Parameter(Mandatory)][string]$CertificatePath,
+        [AllowNull()][AllowEmptyString()][string]$CertificatePassword
+    )
+
+    if (-not (Test-Path -LiteralPath $CertificatePath -PathType Leaf)) {
+        throw "Missing mTLS certificate file: $CertificatePath"
+    }
+
+    try {
+        if ([string]::IsNullOrEmpty($CertificatePassword)) {
+            return [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($CertificatePath)
+        }
+
+        return [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($CertificatePath, $CertificatePassword)
+    } catch {
+        throw "Could not load mTLS certificate file: $CertificatePath"
+    }
+}
+
+function Get-OAuthAuthenticationConfiguration {
+    param([Parameter(Mandatory)][string]$EnvironmentFile)
+
+    Assert-RequiredEnvironmentVariables `
+        -EnvironmentFile $EnvironmentFile `
+        -Names @(
+            "OAUTH2_CLIENT_ID",
+            "OAUTH2_CLIENT_SECRET",
+            "OAUTH2_SCOPE",
+            "OAUTH2_TOKEN_URL"
+        )
+
+    $basicAuthentication = Get-BasicAuthentication `
+        -ClientId $env:OAUTH2_CLIENT_ID `
+        -ClientSecret $env:OAUTH2_CLIENT_SECRET
+
+    return Get-OAuthAccessToken `
+        -TokenUrl $env:OAUTH2_TOKEN_URL `
+        -Scope $env:OAUTH2_SCOPE `
+        -BasicAuthentication $basicAuthentication
+}
+
+function Get-MtlsAuthenticationConfiguration {
+    param([Parameter(Mandatory)][string]$EnvironmentFile)
+
+    Assert-RequiredEnvironmentVariables `
+        -EnvironmentFile $EnvironmentFile `
+        -Names @("MTLS_CERTIFICATE_PATH")
+
+    return Get-MtlsClientCertificate `
+        -CertificatePath $env:MTLS_CERTIFICATE_PATH `
+        -CertificatePassword $env:MTLS_CERTIFICATE_PASSWORD
+}
+
+function Get-ApiAuthenticationConfiguration {
+    param(
+        [Parameter(Mandatory)][ValidateSet("OAuth2", "mTLS")][string]$AuthenticationType,
+        [Parameter(Mandatory)][string]$EnvironmentFile
+    )
+
+    $authentication = @{
+        AccessToken = $null
+        Certificate = $null
+    }
+
+    switch ($AuthenticationType) {
+        "OAuth2" {
+            $authentication.AccessToken = Get-OAuthAuthenticationConfiguration `
+                -EnvironmentFile $EnvironmentFile
+        }
+        "mTLS" {
+            $authentication.Certificate = Get-MtlsAuthenticationConfiguration `
+                -EnvironmentFile $EnvironmentFile
+        }
+    }
+
+    return $authentication
+}
+
+function Add-AuthorizationBearerTokenHeader {
+    param(
+        [Parameter(Mandatory)][hashtable]$Headers,
+        [AllowNull()][AllowEmptyString()][string]$AccessToken
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($AccessToken)) {
+        $Headers["Authorization"] = "Bearer $AccessToken"
+    }
+}
+
 function Write-RequestDetails {
     param(
         [Parameter(Mandatory)][string]$Method,
@@ -65,6 +156,7 @@ function Invoke-ApiRequest {
         [Parameter(Mandatory)][string]$Endpoint,
         [Parameter(Mandatory)][hashtable]$Headers,
         [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$Body,
+        [AllowNull()][System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate,
         [bool]$SkipCertificateCheck = $false
     )
 
@@ -80,6 +172,9 @@ function Invoke-ApiRequest {
     }
     if ($SkipCertificateCheck) {
         $requestParameters.SkipCertificateCheck = $true
+    }
+    if ($null -ne $Certificate) {
+        $requestParameters.Certificate = $Certificate
     }
     if ($null -ne $Body) {
         $requestParameters.Body = $Body

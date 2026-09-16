@@ -4,6 +4,9 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$ConfigPath,
 
+    [ValidateSet("OAuth2", "mTLS")]
+    [string]$AuthenticationType = "OAuth2",
+
     [switch]$SkipCertificateCheck
 )
 
@@ -15,6 +18,7 @@ param(
 function Main {
     param(
         [Parameter(Mandatory)][string]$ConfigurationPath,
+        [Parameter(Mandatory)][ValidateSet("OAuth2", "mTLS")][string]$AuthenticationType,
         [Parameter(Mandatory)][bool]$SkipCertificateValidation
     )
 
@@ -24,24 +28,16 @@ function Main {
     Import-EnvironmentFile -Path $envFile
     Assert-RequiredEnvironmentVariables `
         -EnvironmentFile $envFile `
-        -Names @(
-            "OAUTH2_CLIENT_ID",
-            "OAUTH2_CLIENT_SECRET",
-            "OAUTH2_SCOPE",
-            "OAUTH2_TOKEN_URL",
-            "APIM_SUBSCRIPTION_KEY"
-        )
+        -Names @("APIM_SUBSCRIPTION_KEY")
 
-    $BasicAuthentication = Get-BasicAuthentication `
-        -ClientId $env:OAUTH2_CLIENT_ID `
-        -ClientSecret $env:OAUTH2_CLIENT_SECRET
-    $accessToken = Get-OAuthAccessToken `
-        -TokenUrl $env:OAUTH2_TOKEN_URL `
-        -Scope $env:OAUTH2_SCOPE `
-        -BasicAuthentication $BasicAuthentication
+    $authentication = Get-ApiAuthenticationConfiguration `
+        -AuthenticationType $AuthenticationType `
+        -EnvironmentFile $envFile
     $request = Get-JsonRequestConfiguration `
-        -Configuration $configuration `
-        -AccessToken $accessToken
+        -Configuration $configuration
+    Add-AuthorizationBearerTokenHeader `
+        -Headers $request.Headers `
+        -AccessToken $authentication.AccessToken
 
     Write-RequestDetails `
         -Method $request.Method `
@@ -54,6 +50,7 @@ function Main {
         -Endpoint $request.Endpoint `
         -Headers $request.Headers `
         -Body $request.Body `
+        -Certificate $authentication.Certificate `
         -SkipCertificateCheck $SkipCertificateValidation
 
     Write-ResponseDetails `
@@ -67,4 +64,5 @@ $resolvedConfigPath = Resolve-ConfigurationPath `
 
 Main `
     -ConfigurationPath $resolvedConfigPath `
+    -AuthenticationType $AuthenticationType `
     -SkipCertificateValidation $SkipCertificateCheck.IsPresent
