@@ -68,7 +68,8 @@ function Main {
         [Parameter(Mandatory)][int]$ConnectionTimeoutSeconds
     )
 
-    $configuration = Import-JsonFile -Path $ConfigurationPath
+    $configuration = Import-JsonFile `
+        -Path $ConfigurationPath
     $endpoint = Get-TcpEndpoint `
         -Endpoint (Get-JsonString -Configuration $configuration -Path "request.endpoint")
 

@@ -22,11 +22,13 @@ function Main {
         [Parameter(Mandatory)][bool]$SkipCertificateValidation
     )
 
-    $envFile = Resolve-EnvironmentFilePath `
+    $environmentFile = Resolve-EnvironmentFilePath `
         -ConfigurationPath $ConfigurationPath
-    $configuration = Import-JsonFile -Path $ConfigurationPath
+    $configuration = Import-JsonFile `
+        -Path $ConfigurationPath
 
-    Import-EnvironmentFile -Path $envFile
+    Import-EnvironmentFile `
+        -Path $environmentFile
     Assert-RequiredEnvironmentVariables `
         -Names @("APIM_SUBSCRIPTION_KEY")
 

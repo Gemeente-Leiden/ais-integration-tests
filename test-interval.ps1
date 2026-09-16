@@ -155,11 +155,13 @@ function Main {
 
     $environmentFile = Resolve-EnvironmentFilePath `
         -ConfigurationPath $ConfigurationPath
+    $configuration = Import-JsonFile `
+        -Path $ConfigurationPath
     $apiLibraryPath = Join-Path $PSScriptRoot "lib/api.ps1"
-    $configuration = Import-JsonFile -Path $ConfigurationPath
     $jobs = @()
 
-    Import-EnvironmentFile -Path $environmentFile
+    Import-EnvironmentFile `
+        -Path $environmentFile
     Assert-RequiredEnvironmentVariables `
         -Names @("APIM_SUBSCRIPTION_KEY")
 
