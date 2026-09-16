@@ -223,4 +223,7 @@ function Write-ResponseDetails {
         Write-Host "null"
     }
     Write-Host ""
+
+    Write-Host ("Duration: {0:N2} ms" -f $ApiResponse.DurationMilliseconds)
+    Write-Host ""
 }
