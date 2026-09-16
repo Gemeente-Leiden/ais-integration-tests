@@ -59,9 +59,8 @@ committed, remove them from Git history where appropriate and rotate them.
 
 ## Request configuration
 
-Each run uses a JSON configuration file. Pass `-ConfigPath` directly, or omit it
-to choose from the JSON files found recursively under `tests/`. See
-`tests/dev/brp-personen.json` for a working example.
+Each run uses a request configuration file that defines the request endpoint,
+method, headers, body and runner configurations.
 
 ```json
 {
@@ -90,6 +89,8 @@ to choose from the JSON files found recursively under `tests/`. See
 }
 ```
 
+See `tests/dev/brp-personen.json` for a working example.
+
 ### Request properties
 
 | Property | Required | Description |
@@ -116,61 +117,72 @@ Strings in request headers and bodies can reference environment variables using
 
 An unresolved or empty placeholder stops the run with an error.
 
-## Authentication type
+## Authentication
 
-The HTTP runners support `-AuthenticationType` with these values:
+All runs except the TCP connection test support the `-AuthenticationType`
+parameter to control authentication to the specified endpoint. It supports the
+following values:
 
 | Value | Description |
 | --- | --- |
 | `OAuth2` | Retrieves an OAuth 2.0 access token and injects the `Authorization` header automatically. This is the default. |
 | `mTLS` | Sends the request with the client certificate from `MTLS_CERTIFICATE_PATH`. No OAuth token is retrieved. |
 
-Request configurations do not need to set the OAuth `Authorization` header.
+### Environment variables
 
-`MTLS_CERTIFICATE_PASSWORD` may be left empty when the PFX file does not require
-a password.
+The environment variables relevant for each authentication type are:
+
+| Authentication type | Environment variable(s) |
+| --- | --- |
+| `OAuth2` | `OAUTH2_CLIENT_ID`, `OAUTH2_CLIENT_SECRET`, `OAUTH2_SCOPE`, `OAUTH2_TOKEN_URL` |
+| `mTLS` | `MTLS_CERTIFICATE_PATH`, `MTLS_CERTIFICATE_PASSWORD` (only needed when the PFX file is password protected) |
+
+> Note: `APIM_SUBSCRIPTION_KEY` is not part of the authentication flow itself; it
+> is typically added to the request headers for API management access.
 
 ## Run a single request
 
-```powershell
-./test-single.ps1 -ConfigPath ./tests/dev/brp-personen.json
-```
-
-To use mTLS instead of OAuth 2.0:
-
-```powershell
-./test-single.ps1 -ConfigPath ./tests/dev/brp-personen.json -AuthenticationType mTLS
-```
-
-Omit `-ConfigPath` to select a configuration interactively:
+To execute a single request, run the following script:
 
 ```powershell
 ./test-single.ps1
 ```
 
-To disable TLS certificate validation for a run, add the optional switch:
-
-```powershell
-./test-single.ps1 -ConfigPath ./tests/dev/brp-personen.json -SkipCertificateCheck
-```
-
-The single test prints the request method, endpoint, headers, body, response
-status, response headers, and response body.
-
 > **Warning:** Request output includes resolved headers, including authorization
 > and subscription credentials. Do not share terminal output without redacting
 > sensitive values.
 
+### Parameters
+
+This script accepts the following parameters:
+
+| Parameter | Description |
+| --- | --- |
+| `-ConfigPath` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
+| `-AuthenticationType` | Authentication method. Supported values are `OAuth2` (default) and `mTLS`. |
+| `-SkipCertificateCheck` | Disables TLS certificate validation for this run. Use only in trusted test environments. |
+
 ## Run an interval test
 
+To execute an interval test, run the following script:
+
 ```powershell
-./test-interval.ps1 -ConfigPath ./tests/dev/brp-personen.json
-./test-interval.ps1 -ConfigPath ./tests/dev/brp-personen.json -SkipCertificateCheck
+./test-interval.ps1
 ```
 
-You can also omit `-ConfigPath` to choose from configurations under `tests/`.
+### Parameters
 
-The `interval` object controls the run:
+This script accepts the following parameters:
+
+| Parameter | Description |
+| --- | --- |
+| `-ConfigPath` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
+| `-AuthenticationType` | Authentication method. Supported values are `OAuth2` (default) and `mTLS`. |
+| `-SkipCertificateCheck` | Disables TLS certificate validation for this run. Use only in trusted test environments. |
+
+### Request configuration
+
+The `interval` object in the chosen request configuration controls the run:
 
 | Property | Description |
 | --- | --- |
@@ -186,14 +198,25 @@ stops.
 
 ## Run a rate test
 
+To execute a rate test, run the following script:
+
 ```powershell
-./test-rate.ps1 -ConfigPath ./tests/dev/brp-personen.json
-./test-rate.ps1 -ConfigPath ./tests/dev/brp-personen.json -SkipCertificateCheck
+./test-rate.ps1
 ```
 
-You can also omit `-ConfigPath` to choose from configurations under `tests/`.
+### Parameters
 
-The `rate` object controls the run:
+This script accepts the following parameters:
+
+| Parameter | Description |
+| --- | --- |
+| `-ConfigPath` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
+| `-AuthenticationType` | Authentication method. Supported values are `OAuth2` (default) and `mTLS`. |
+| `-SkipCertificateCheck` | Disables TLS certificate validation for this run. Use only in trusted test environments. |
+
+### Request configuration
+
+The `rate` object in the chosen request configuration controls the run:
 
 | Property | Description |
 | --- | --- |
@@ -208,29 +231,33 @@ rate.
 
 ## Run a TCP connection test
 
-```powershell
-./test-tcp.ps1 -ConfigPath ./tests/dev/brp-personen.json
-```
-
-You can also omit `-ConfigPath` to choose from configurations under `tests/`.
-
-The TCP test reads `request.endpoint`, extracts its host and port, and attempts
-one TCP connection. It does not retrieve an OAuth token, load `.env`, send HTTP
-headers, or send a request body.
-
-HTTP and HTTPS URLs use their standard ports when no port is specified: port 80
-for HTTP and port 443 for HTTPS. Other URI schemes must include an explicit
-port, for example `tcp://service.example.nl:8443`.
-
-The default connection timeout is 10 seconds. Set a value from 1 through 300
-seconds with `-TimeoutSeconds`:
+To execute a TCP connection test, run the following script:
 
 ```powershell
-./test-tcp.ps1 -ConfigPath ./tests/dev/brp-personen.json -TimeoutSeconds 5
+./test-tcp.ps1
 ```
 
 The script reports the selected host and port and the connection duration. A
 refused, timed-out, or otherwise failed connection returns a nonzero exit code.
+
+### Parameters
+
+This script accepts the following parameters:
+
+| Parameter | Description |
+| --- | --- |
+| `-ConfigPath` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
+| `-TimeoutSeconds` | Connection timeout for the TCP check, from 1 to 300 seconds. Defaults to 10 seconds. |
+
+### Request configuration
+
+The TCP test reads `request.endpoint` from the chosen request configuration,
+extracts its host and port, and attempts one TCP connection. It does not
+retrieve an OAuth token, load `.env`, send HTTP headers, or send a request body.
+
+HTTP and HTTPS URLs use their standard ports when no port is specified: port 80
+for HTTP and port 443 for HTTPS. Other URI schemes must include an explicit
+port, for example `tcp://service.example.nl:8443`.
 
 ## Results and timing
 
@@ -254,8 +281,7 @@ throw an error. Configuration and authentication errors also terminate the run.
 
 ## Multiple configurations
 
-Store independent JSON files under `tests/` and omit `-ConfigPath` to select one
-at runtime. You can still pass paths explicitly:
+Multiple independent request configuration files can be stored under `tests/`.
 
 ```powershell
 ./test-single.ps1 -ConfigPath ./tests/request-a.json
