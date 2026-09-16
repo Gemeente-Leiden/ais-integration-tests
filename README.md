@@ -28,7 +28,8 @@ Run all commands from the repository root.
 
 ## Setup
 
-Create the local secrets file from the example:
+Environment variables can be set explicitly in the current process or loaded
+from a local secrets file. To use a file, copy the example:
 
 ```powershell
 Copy-Item .env.example .env
@@ -45,6 +46,13 @@ MTLS_CERTIFICATE_PATH=replace-with-client-certificate-pfx-path
 MTLS_CERTIFICATE_PASSWORD=replace-with-client-certificate-password
 APIM_SUBSCRIPTION_KEY=replace-with-subscription-key
 ```
+
+For each HTTP request configuration, the runner searches for the closest `.env`
+file from the configuration file's directory upward to the filesystem root. For
+example, `tests/prod/brp-personen.json` uses `tests/prod/.env` when it exists,
+while `tests/dev/brp-personen.json` uses the repository-root `.env` when there
+is no closer file. When no `.env` file is found, the existing process
+environment is used unchanged.
 
 `.env` is ignored by Git. Do not commit credentials. If credentials were ever
 committed, remove them from Git history where appropriate and rotate them.
@@ -103,7 +111,7 @@ The request body supports the following forms:
 Strings in request headers and bodies can reference environment variables using
 `${NAME}`. The following placeholders are commonly used:
 
-- `${APIM_SUBSCRIPTION_KEY}` is read from `.env`.
+- `${APIM_SUBSCRIPTION_KEY}` is read from the process environment.
 - Any other `${NAME}` is resolved from the current process environment.
 
 An unresolved or empty placeholder stops the run with an error.
@@ -256,7 +264,8 @@ at runtime. You can still pass paths explicitly:
 
 Both relative and absolute paths are supported. A configuration used by the
 interval runner must contain an `interval` object; a configuration used by the
-rate runner must contain a `rate` object.
+rate runner must contain a `rate` object. Explicit configuration paths may also
+point outside the repository.
 
 ## Security notes
 

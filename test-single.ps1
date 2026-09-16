@@ -22,17 +22,16 @@ function Main {
         [Parameter(Mandatory)][bool]$SkipCertificateValidation
     )
 
-    $envFile = Join-Path $PSScriptRoot ".env"
+    $envFile = Resolve-EnvironmentFilePath `
+        -ConfigurationPath $ConfigurationPath
     $configuration = Import-JsonFile -Path $ConfigurationPath
 
     Import-EnvironmentFile -Path $envFile
     Assert-RequiredEnvironmentVariables `
-        -EnvironmentFile $envFile `
         -Names @("APIM_SUBSCRIPTION_KEY")
 
     $authentication = Get-ApiAuthenticationConfiguration `
-        -AuthenticationType $AuthenticationType `
-        -EnvironmentFile $envFile
+        -AuthenticationType $AuthenticationType
     $request = Get-JsonRequestConfiguration `
         -Configuration $configuration
     Add-AuthorizationBearerTokenHeader `

@@ -60,10 +60,7 @@ function Get-MtlsClientCertificate {
 }
 
 function Get-OAuthAuthenticationConfiguration {
-    param([Parameter(Mandatory)][string]$EnvironmentFile)
-
     Assert-RequiredEnvironmentVariables `
-        -EnvironmentFile $EnvironmentFile `
         -Names @(
             "OAUTH2_CLIENT_ID",
             "OAUTH2_CLIENT_SECRET",
@@ -82,10 +79,7 @@ function Get-OAuthAuthenticationConfiguration {
 }
 
 function Get-MtlsAuthenticationConfiguration {
-    param([Parameter(Mandatory)][string]$EnvironmentFile)
-
     Assert-RequiredEnvironmentVariables `
-        -EnvironmentFile $EnvironmentFile `
         -Names @("MTLS_CERTIFICATE_PATH")
 
     return Get-MtlsClientCertificate `
@@ -94,10 +88,7 @@ function Get-MtlsAuthenticationConfiguration {
 }
 
 function Get-ApiAuthenticationConfiguration {
-    param(
-        [Parameter(Mandatory)][ValidateSet("OAuth2", "mTLS")][string]$AuthenticationType,
-        [Parameter(Mandatory)][string]$EnvironmentFile
-    )
+    param([Parameter(Mandatory)][ValidateSet("OAuth2", "mTLS")][string]$AuthenticationType)
 
     $authentication = @{
         AccessToken = $null
@@ -106,12 +97,10 @@ function Get-ApiAuthenticationConfiguration {
 
     switch ($AuthenticationType) {
         "OAuth2" {
-            $authentication.AccessToken = Get-OAuthAuthenticationConfiguration `
-                -EnvironmentFile $EnvironmentFile
+            $authentication.AccessToken = Get-OAuthAuthenticationConfiguration
         }
         "mTLS" {
-            $authentication.Certificate = Get-MtlsAuthenticationConfiguration `
-                -EnvironmentFile $EnvironmentFile
+            $authentication.Certificate = Get-MtlsAuthenticationConfiguration
         }
     }
 

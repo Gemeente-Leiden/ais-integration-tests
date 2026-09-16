@@ -153,14 +153,14 @@ function Main {
         [Parameter(Mandatory)][bool]$SkipCertificateValidation
     )
 
-    $environmentFile = Join-Path $PSScriptRoot ".env"
+    $environmentFile = Resolve-EnvironmentFilePath `
+        -ConfigurationPath $ConfigurationPath
     $apiLibraryPath = Join-Path $PSScriptRoot "lib/api.ps1"
     $configuration = Import-JsonFile -Path $ConfigurationPath
     $jobs = @()
 
     Import-EnvironmentFile -Path $environmentFile
     Assert-RequiredEnvironmentVariables `
-        -EnvironmentFile $environmentFile `
         -Names @("APIM_SUBSCRIPTION_KEY")
 
     $intervalSeconds = Get-JsonPositiveInteger `
@@ -179,8 +179,7 @@ function Main {
         -Maximum 100)
 
     $authentication = Get-ApiAuthenticationConfiguration `
-        -AuthenticationType $AuthenticationType `
-        -EnvironmentFile $environmentFile
+        -AuthenticationType $AuthenticationType
     $request = Get-JsonRequestConfiguration `
         -Configuration $configuration
     Add-AuthorizationBearerTokenHeader `

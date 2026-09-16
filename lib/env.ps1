@@ -1,5 +1,29 @@
+function Resolve-EnvironmentFilePath {
+    param([Parameter(Mandatory)][string]$ConfigurationPath)
+
+    $configurationDirectory = [System.IO.DirectoryInfo]::new(
+        [System.IO.Path]::GetDirectoryName(
+            [System.IO.Path]::GetFullPath($ConfigurationPath)
+        )
+    )
+
+    $currentDirectory = $configurationDirectory
+    while ($null -ne $currentDirectory) {
+        $candidatePath = Join-Path $currentDirectory.FullName ".env"
+        if (Test-Path -LiteralPath $candidatePath -PathType Leaf) {
+            return $candidatePath
+        }
+
+        $currentDirectory = $currentDirectory.Parent
+    }
+}
+
 function Import-EnvironmentFile {
-    param([Parameter(Mandatory)][string]$Path)
+    param([AllowNull()][AllowEmptyString()][string]$Path)
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return
+    }
 
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
         throw "Missing environment file: $Path"
@@ -25,14 +49,11 @@ function Import-EnvironmentFile {
 }
 
 function Assert-RequiredEnvironmentVariables {
-    param(
-        [Parameter(Mandatory)][string]$EnvironmentFile,
-        [Parameter(Mandatory)][string[]]$Names
-    )
+    param([Parameter(Mandatory)][string[]]$Names)
 
     foreach ($variableName in $Names) {
         if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($variableName))) {
-            throw "Missing required variable in ${EnvironmentFile}: $variableName"
+            throw "Missing required environment variable: $variableName"
         }
     }
 }
