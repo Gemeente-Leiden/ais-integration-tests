@@ -123,22 +123,10 @@ All runs except the TCP connection test support the `-AuthenticationType`
 parameter to control authentication to the specified endpoint. It supports the
 following values:
 
-| Value | Description |
-| --- | --- |
-| `OAuth2` | Retrieves an OAuth 2.0 access token and injects the `Authorization` header automatically. This is the default. |
-| `mTLS` | Sends the request with the client certificate from `MTLS_CERTIFICATE_PATH`. No OAuth token is retrieved. |
-
-### Environment variables
-
-The environment variables relevant for each authentication type are:
-
-| Authentication type | Environment variable(s) |
-| --- | --- |
-| `OAuth2` | `OAUTH2_CLIENT_ID`, `OAUTH2_CLIENT_SECRET`, `OAUTH2_SCOPE`, `OAUTH2_TOKEN_URL` |
-| `mTLS` | `MTLS_CERTIFICATE_PATH`, `MTLS_CERTIFICATE_PASSWORD` (only needed when the PFX file is password protected) |
-
-> Note: `APIM_SUBSCRIPTION_KEY` is not part of the authentication flow itself; it
-> is typically added to the request headers for API management access.
+| Authentication type | Description | Relevant environment variable(s) |
+| --- | --- | --- |
+| `OAuth2` | Retrieves an OAuth 2.0 access token and injects the `Authorization` header automatically. This is the default. | `OAUTH2_CLIENT_ID`, `OAUTH2_CLIENT_SECRET`, `OAUTH2_SCOPE`, `OAUTH2_TOKEN_URL` |
+| `mTLS` | Sends the request with the client certificate from `MTLS_CERTIFICATE_PATH`. No OAuth token is retrieved. | `MTLS_CERTIFICATE_PATH`, `MTLS_CERTIFICATE_PASSWORD` (only needed when the PFX file is password protected) |
 
 ## Run a single request
 
