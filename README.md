@@ -125,7 +125,7 @@ following values:
 | Authentication type | Description | Relevant environment variable(s) |
 | --- | --- | --- |
 | `OAuth2` | Retrieves an OAuth 2.0 access token and injects the `Authorization` header automatically. This is the default. | `OAUTH2_CLIENT_ID`, `OAUTH2_CLIENT_SECRET`, `OAUTH2_SCOPE`, `OAUTH2_TOKEN_URL` |
-| `mTLS` | Sends the request with the client certificate from `MTLS_CERTIFICATE_PATH`. No OAuth token is retrieved. | `MTLS_CERTIFICATE_PATH`, `MTLS_CERTIFICATE_PASSWORD` (only needed when the PFX file is password protected) |
+| `mTLS` | Sends the request with the client certificate from `MTLS_CERTIFICATE_PATH` (PFX). No OAuth token is retrieved. | `MTLS_CERTIFICATE_PATH`, `MTLS_CERTIFICATE_PASSWORD` (only needed when the PFX file is password protected) |
 
 ## Run a single request
 
