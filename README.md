@@ -35,6 +35,9 @@ from a local secrets file. To use a file, copy the example:
 Copy-Item .env.example .env
 ```
 
+> **Warning:** `.env` is ignored by Git. Do not commit credentials. If credentials were ever
+> committed, remove them from Git history where appropriate and rotate them.
+
 Fill in these values in `.env`:
 
 ```dotenv
@@ -53,9 +56,6 @@ example, `tests/prod/brp-personen.json` uses `tests/prod/.env` when it exists,
 while `tests/dev/brp-personen.json` uses the repository-root `.env` when there
 is no closer file. When no `.env` file is found, the existing process
 environment is used unchanged.
-
-`.env` is ignored by Git. Do not commit credentials. If credentials were ever
-committed, remove them from Git history where appropriate and rotate them.
 
 ## Request configuration
 
