@@ -112,8 +112,7 @@ The request body supports the following forms:
 Strings in request headers and bodies can reference environment variables using
 `${NAME}`. The following placeholders are commonly used:
 
-- `${APIM_SUBSCRIPTION_KEY}` is read from the process environment.
-- Any other `${NAME}` is resolved from the current process environment.
+- `${APIM_SUBSCRIPTION_KEY}`
 
 An unresolved or empty placeholder stops the run with an error.
 
