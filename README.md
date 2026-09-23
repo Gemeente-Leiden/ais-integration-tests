@@ -298,6 +298,11 @@ Multiple independent request configuration files can be stored under `tests/`.
 ./test-single.ps1 -ConfigPath ./tests/request-b.json
 ```
 
+```bash
+./test-single.sh --config-path ./tests/request-a.json
+./test-single.sh --config-path ./tests/request-b.json
+```
+
 Both relative and absolute paths are supported. A configuration used by the
 interval runner must contain an `interval` object; a configuration used by the
 rate runner must contain a `rate` object. Explicit configuration paths may also
