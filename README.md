@@ -4,20 +4,23 @@
 
 # AIS integration tests
 
-PowerShell tools for testing protected HTTP APIs with OAuth 2.0 or mTLS. A
+PowerShell and Bash tools for testing protected HTTP APIs with OAuth 2.0 or mTLS. A
 request is defined in a JSON file, so multiple endpoints and payloads can be
 maintained as separate test configurations.
 
 The repository provides four test modes:
 
-- `test-single.ps1` sends one request and prints the request and response.
-- `test-interval.ps1` starts a concurrent batch at a fixed interval.
-- `test-rate.ps1` distributes requests at a configured requests-per-second rate.
-- `test-tcp.ps1` checks whether a TCP connection can be opened to the request endpoint.
+| Command | Description |
+| --- | --- |
+| `test-single` | Sends one request and prints the request and response. |
+| `test-interval` | Starts a concurrent batch at a fixed interval. |
+| `test-rate` | Distributes requests at a configured requests-per-second rate. |
+| `test-tcp` | Checks whether a TCP connection can be opened to the request endpoint. |
 
 ## Prerequisites
 
 - PowerShell 7 or newer (`pwsh`)
+- Bash 3.2 or newer, `jq`, `curl`, and `nc` for Bash runners
 - Network access to the OAuth token endpoint, when using OAuth 2.0
 - Network access to the target API
 - OAuth client credentials, when using OAuth 2.0
@@ -33,6 +36,10 @@ from a local secrets file. To use a file, copy the example:
 
 ```powershell
 Copy-Item .env.example .env
+```
+
+```bash
+cp .env.example .env
 ```
 
 > **Warning:** `.env` is ignored by Git. Do not commit credentials. If credentials were ever
@@ -135,6 +142,10 @@ To execute a single request, run the following script:
 ./test-single.ps1
 ```
 
+```bash
+./test-single.sh
+```
+
 > **Warning:** Request output includes resolved headers, including authorization
 > and subscription credentials. Do not share terminal output without redacting
 > sensitive values.
@@ -143,11 +154,11 @@ To execute a single request, run the following script:
 
 This script accepts the following parameters:
 
-| Parameter | Description |
-| --- | --- |
-| `-ConfigPath` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
-| `-AuthenticationType` | Authentication method. Supported values are `OAuth2` (default) and `mTLS`. |
-| `-SkipCertificateCheck` | Disables TLS certificate validation for this run. Use only in trusted test environments. |
+| PowerShell | Bash | Description |
+| --- | --- | --- |
+| `-ConfigPath` | `--config-path` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
+| `-AuthenticationType` | `--authentication-type` | Authentication method. Supported values are `OAuth2` (default) and `mTLS`. |
+| `-SkipCertificateCheck` | `--skip-certificate-check` | Disables TLS certificate validation for this run. Use only in trusted test environments. |
 
 ## Run an interval test
 
@@ -157,15 +168,19 @@ To execute an interval test, run the following script:
 ./test-interval.ps1
 ```
 
+```bash
+./test-interval.sh
+```
+
 ### Parameters
 
 This script accepts the following parameters:
 
-| Parameter | Description |
-| --- | --- |
-| `-ConfigPath` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
-| `-AuthenticationType` | Authentication method. Supported values are `OAuth2` (default) and `mTLS`. |
-| `-SkipCertificateCheck` | Disables TLS certificate validation for this run. Use only in trusted test environments. |
+| PowerShell | Bash | Description |
+| --- | --- | --- |
+| `-ConfigPath` | `--config-path` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
+| `-AuthenticationType` | `--authentication-type` | Authentication method. Supported values are `OAuth2` (default) and `mTLS`. |
+| `-SkipCertificateCheck` | `--skip-certificate-check` | Disables TLS certificate validation for this run. Use only in trusted test environments. |
 
 ### Request configuration
 
@@ -191,15 +206,19 @@ To execute a rate test, run the following script:
 ./test-rate.ps1
 ```
 
+```bash
+./test-rate.sh
+```
+
 ### Parameters
 
 This script accepts the following parameters:
 
-| Parameter | Description |
-| --- | --- |
-| `-ConfigPath` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
-| `-AuthenticationType` | Authentication method. Supported values are `OAuth2` (default) and `mTLS`. |
-| `-SkipCertificateCheck` | Disables TLS certificate validation for this run. Use only in trusted test environments. |
+| PowerShell | Bash | Description |
+| --- | --- | --- |
+| `-ConfigPath` | `--config-path` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
+| `-AuthenticationType` | `--authentication-type` | Authentication method. Supported values are `OAuth2` (default) and `mTLS`. |
+| `-SkipCertificateCheck` | `--skip-certificate-check` | Disables TLS certificate validation for this run. Use only in trusted test environments. |
 
 ### Request configuration
 
@@ -224,6 +243,10 @@ To execute a TCP connection test, run the following script:
 ./test-tcp.ps1
 ```
 
+```bash
+./test-tcp.sh
+```
+
 The script reports the selected host and port and the connection duration. A
 refused, timed-out, or otherwise failed connection returns a nonzero exit code.
 
@@ -231,10 +254,10 @@ refused, timed-out, or otherwise failed connection returns a nonzero exit code.
 
 This script accepts the following parameters:
 
-| Parameter | Description |
-| --- | --- |
-| `-ConfigPath` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
-| `-TimeoutSeconds` | Connection timeout for the TCP check, from 1 to 300 seconds. Defaults to 10 seconds. |
+| PowerShell | Bash | Description |
+| --- | --- | --- |
+| `-ConfigPath` | `--config-path` | Path to the request configuration file. When omitted, the script prompts you to choose one from `tests/`. |
+| `-TimeoutSeconds` | `--timeout-seconds` | Connection timeout for the TCP check, from 1 to 300 seconds. Defaults to 10 seconds. |
 
 ### Request configuration
 
