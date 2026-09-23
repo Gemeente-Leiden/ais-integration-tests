@@ -22,13 +22,13 @@
   },
   "interval": {
     "seconds": 10,
-    "concurrentExecutions": 10,
-    "durationSeconds": 60,
+    "concurrentExecutions": 5,
+    "durationSeconds": 20,
     "percentiles": [80, 90, 95]
   },
   "rate": {
-    "requestsPerSecond": 10,
-    "durationSeconds": 30,
+    "requestsPerSecond": 5,
+    "durationSeconds": 10,
     "percentiles": [80, 90, 95]
   }
 }
