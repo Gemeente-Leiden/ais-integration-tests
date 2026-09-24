@@ -1,0 +1,34 @@
+{
+  "request": {
+    "endpoint": "https://apim-ais-gen-002-a.azure-api.net/api/reg/persons/v1/personen",
+    "method": "POST",
+    "headers": {
+      "Ocp-Apim-Subscription-Key": "${APIM_SUBSCRIPTION_KEY}",
+      "Ocp-Apim-Trace": "true",
+      "x-gebruiker": "script",
+      "x-doelbinding": "naw",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "type": "RaadpleegMetBurgerservicenummer",
+      "burgerservicenummer": [
+        "999993483"
+      ],
+      "fields": [
+        "burgerservicenummer",
+        "naam.voornamen"
+      ]
+    }
+  },
+  "interval": {
+    "seconds": 10,
+    "concurrentExecutions": 5,
+    "durationSeconds": 20,
+    "percentiles": [80, 90, 95]
+  },
+  "rate": {
+    "requestsPerSecond": 5,
+    "durationSeconds": 10,
+    "percentiles": [80, 90, 95]
+  }
+}
