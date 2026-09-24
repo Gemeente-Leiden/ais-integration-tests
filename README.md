@@ -310,8 +310,9 @@ point outside the repository.
 
 ## Security notes
 
-- Use `-SkipCertificateCheck` only in an environment where
-    bypassing TLS certificate validation is explicitly acceptable.
+- Use `-SkipCertificateCheck` or `--skip-certificate-check` only in an
+    environment where bypassing TLS certificate validation is explicitly
+    acceptable.
 - Keep `.env` local and rotate credentials if they may have been exposed.
 - Start with low concurrency and request rates. Confirm that load testing is
     permitted for the target environment before increasing them.
